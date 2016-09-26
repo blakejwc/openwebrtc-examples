@@ -4,9 +4,13 @@
         <title>OpenWebRTC Demo</title>
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
         <link rel="stylesheet" type="text/css" href="main.css">
+        <link rel="stylesheet" type="text/css" href="css/icons.css">
         <script src="signaling_channel.js"></script>
         <script src="sdp.js"></script>
         <script src="main.js"></script>
+        <script type="text/javascript" src="jquery.min.js"></script>
+        <script type="text/javascript" src="ros.js"></script>
+        <script type="text/javascript" src="joystick.js"></script>
     </head>
     <body>
         <header>
@@ -36,6 +40,20 @@
             <div id="chat-container">
                 <input type="sendtext" id="chat_txt" disable placeholder="Type here">
                 <input type="button" class="btn" id="chat_but" value="Send">
+            </div>
+            <div id="driveControlsContainer" class="hidden">
+                <div class="cameraControlsContainer">
+                    <a class="cameraTiltButton" id="camera_tilt_up" data-container="body" data-toggle="popover" shortcut="joystickPopover" data-placement="top" data-i18n="[content]joystick.tiltCameraUp" content="Tilt camera up">
+                        <i id="cameraTiltUpButton" class="icon-arrow-up"></i>
+                    </a>
+                    <div class="cameraIcon">
+                        <i class="icon-video-camera"></i>
+                    </div>
+                    <a class="cameraTiltButton" id="camera_tilt_down" data-container="body" data-toggle="popover" shortcut="joystickPopover" data-placement="top" data-i18n="[content]joystick.tiltCameraDown" content="Tilt camera down">
+                        <i id="cameraTiltDownButton" class="icon-arrow-down"></i>
+                    </a>
+                </div>
+                <canvas id="joystickCanvas" class="joystickcanvas"></canvas>
             </div>
             <div id="log_div"></div>
         </section>

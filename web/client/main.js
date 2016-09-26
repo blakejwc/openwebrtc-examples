@@ -1,6 +1,10 @@
-/*var isMozilla = window.mozRTCPeerConnection && !window.webkitRTCPeerConnection;*/
-if (!window.RTCPeerConnection) {
-    window.RTCPeerConnection = window.webkitRTCPeerConnection;
+var isMozilla = window.mozRTCPeerConnection && !window.webkitRTCPeerConnection;
+if (isMozilla) {
+    window.webkitURL = window.URL;
+    navigator.webkitGetUserMedia = navigator.mozGetUserMedia;
+    window.webkitRTCPeerConnection = window.mozRTCPeerConnection;
+    window.RTCSessionDescription = window.mozRTCSessionDescription;
+    window.RTCIceCandidate = window.mozRTCIceCandidate;
 }
 
 var selfView;
@@ -22,13 +26,14 @@ var channel;
 if (!window.hasOwnProperty("orientation"))
     window.orientation = -90;
 
+// must use 'url' here since Firefox doesn't understand 'urls'
 var configuration = {
   "iceServers": [
   {
-    "urls": "stun:mmt-stun.verkstad.net"
+    "url": "stun:mmt-stun.verkstad.net"
   },
   {
-    "urls": "turn:mmt-turn.verkstad.net",
+    "url": "turn:mmt-turn.verkstad.net",
     "username": "webrtc",
     "credential": "secret"
   }
@@ -48,6 +53,12 @@ window.onload = function () {
     chatDiv = document.getElementById("chat_div");
     chatCheckBox = document.getElementById("chat_cb");
 
+    // if browser doesn't support DataChannels the chat will be disabled.
+    if (webkitRTCPeerConnection.prototype.createDataChannel === undefined) {
+        chatCheckBox.checked = false;
+        chatCheckBox.disabled = true;
+    }
+
     // Store media preferences
     audioCheckBox.onclick = videoCheckBox.onclick = chatCheckBox.onclick = function(evt) {
         localStorage.setItem(this.id, this.checked);
@@ -56,13 +67,14 @@ window.onload = function () {
     audioCheckBox.checked = localStorage.getItem("audio_cb") == "true";
     videoCheckBox.checked = localStorage.getItem("video_cb") == "true";
 
-    chatCheckBox.checked = localStorage.getItem("chat_cb") == "true";
+    if (webkitRTCPeerConnection.prototype.createDataChannel !== undefined)
+        chatCheckBox.checked = localStorage.getItem("chat_cb") == "true";
 
     // Check video box if no preferences exist
     if (!localStorage.getItem("video_cb"))
         videoCheckBox.checked = true;
 
-    joinButton.disabled = !navigator.mediaDevices.getUserMedia;
+    joinButton.disabled = !navigator.webkitGetUserMedia;
     joinButton.onclick = function (evt) {
         if (!(audioCheckBox.checked || videoCheckBox.checked || chatCheckBox.checked)) {
             alert("Choose at least audio, video or chat.");
@@ -75,6 +87,9 @@ window.onload = function () {
         if (!(videoCheckBox.checked || audioCheckBox.checked)) peerJoin();
 
         function peerJoin() {
+            window.Ros.init();
+            window.Joystick.init();
+
             var sessionId = document.getElementById("session_txt").value;
             signalingChannel = new SignalingChannel(sessionId);
 
@@ -110,10 +125,10 @@ window.onload = function () {
         // video/audio with our without chat
         if (videoCheckBox.checked || audioCheckBox.checked) {
             // get a local stream
-            navigator.mediaDevices.getUserMedia({ "audio": audioCheckBox.checked,
-                "video": videoCheckBox.checked}).then(function (stream) {
+            navigator.webkitGetUserMedia({ "audio": audioCheckBox.checked,
+                "video": videoCheckBox.checked}, function (stream) {
                 // .. show it in a self-view
-                selfView.srcObject = stream;
+                selfView.src = URL.createObjectURL(stream);
                 // .. and keep it to be sent later
                 localStream = stream;
 
@@ -126,7 +141,7 @@ window.onload = function () {
                     audioOnlyView.style.visibility = "visible";
 
                 peerJoin();
-            }).catch(logError);
+            }, logError);
         }
     };
 
@@ -186,7 +201,7 @@ function handleMessage(evt) {
 // call start() to initiate
 function start(isInitiator) {
     callButton.disabled = true;
-    pc = new RTCPeerConnection(configuration);
+    pc = new webkitRTCPeerConnection(configuration);
 
     // send any ice candidates to the other peer
     pc.onicecandidate = function (evt) {
@@ -218,7 +233,7 @@ function start(isInitiator) {
 
     // once the remote stream arrives, show it in the remote video element
     pc.onaddstream = function (evt) {
-        remoteView.srcObject = evt.stream;
+        remoteView.src = URL.createObjectURL(evt.stream);
         if (videoCheckBox.checked)
             remoteView.style.visibility = "visible";
         else if (audioCheckBox.checked && !(chatCheckBox.checked))
@@ -281,6 +296,8 @@ function log(msg) {
 // setup chat
 function setupChat() {
     channel.onopen = function () {
+        window.Joystick.toggleJoystick(true);
+
         chatDiv.style.visibility = "visible";
         chatText.style.visibility = "visible";
         chatButton.style.visibility = "visible";
