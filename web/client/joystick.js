@@ -23,7 +23,7 @@ var mouseEnum = {
  * The meters / second maximum linear speed
  * @property MAX_VELOCITY {Float}
  */
-var MAX_VELOCITY = 0.2;
+var MAX_VELOCITY = 0.4;
 
 /**
  * The max time (in milliseconds) allowed for continuous super teleoperation
@@ -50,7 +50,7 @@ var CAMERA_TILT_COMMAND_PING = 100;
  * The radians / second maximum angular speed
  * @property MAX_OMEGA {Float}
  */
-var MAX_OMEGA = 0.2;
+var MAX_OMEGA = 0.7;
 
 window.Joystick = {
     /**
